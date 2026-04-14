@@ -17,6 +17,12 @@ pipeline {
         }
     }
 
+	stage('Debug Path') {
+    	steps {
+        	bat 'where python'
+        	bat 'python --version'
+    	}
+	}
     stage('Tests')
     {
         parallel {
