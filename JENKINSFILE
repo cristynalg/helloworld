@@ -46,19 +46,11 @@ pipeline {
                         bat '''
                             set PYTHONPATH=%WORKSPACE%
                             set FLASK_APP=app\\api.py
-                            
-                            :: Lanzar en segundo plano y guardar log para no bloquear
-                            start /B flask run > flask.log 2>&1
-                            start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock > wiremock.log 2>&1
-                            
-                            :: Espera de 20 segundos con PING
-                            ping -n 21 127.0.0.1 > nul
-                            
+                            set FLASK_ENV=development
+                            start flask run                      
+                            java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
                             :: Ejecutar tests
                             python -m pytest --junitxml=result-rest.xml test\\rest
-                            
-                            :: Limpieza de procesos
-                            taskkill /F /IM java.exe /T
                         '''
                     }
                 }
