@@ -23,6 +23,16 @@ pipeline {
         	bat 'python --version'
     	}
 	}
+
+	stage('Diagnóstico') {
+    	steps {
+        	bat '''
+            	echo El PATH actual es: %PATH%
+            	dir "C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64"
+        	'''
+    	}
+	}
+
     stage('Tests')
     {
         parallel {
