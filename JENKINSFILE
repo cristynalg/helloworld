@@ -1,82 +1,74 @@
 pipeline {
     agent any
 
-     stages {
+    stages {
         stage('Get Code') {
             steps {
-                // Obtener código del repo
                 git 'https://github.com/cristynalg/helloworld.git'
             }
         }
 
-    stage('Build') {
-        steps {
-            echo 'Eyyyy, esto es Python. No hay que compilar nada!!!'
-	    echo WORKSPACE
-	    bat 'dir'
-        }
-    }
-
-	stage('Debug Path') {
-    	steps {
-        	bat 'where python'
-        	bat 'python --version'
-    	}
-	}
-
-	stage('Diagnóstico') {
-    	steps {
-        	bat '''
-            	echo El PATH actual es: %PATH%
-            	dir "C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64"
-        	'''
-    	}
-	}
-
-    stage('Tests')
-    {
-        parallel {
-
-            stage('Unit') {
-                steps {
-                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        bat '''
-                                set PYTHONPATH=C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld
-                                python -m pytest --junitxml=result-unit.xml test\\unit
-                        '''
-                    }
-                }
+        stage('Build') {
+            steps {
+                echo "Workspace actual: ${WORKSPACE}"
+                bat 'dir'
             }
-            
-        stage('Rest') {
+        }
+
+        stage('Debug & Diagnóstico') {
             steps {
                 bat '''
-                    set PYTHONPATH=%WORKSPACE%
-                    set FLASK_APP=app\\api.py
-                    
-                    :: Lanzar en segundo plano real (/B) y redirigir salida a un log para que no se bloquee
-                    start /B flask run > flask.log 2>&1
-                    start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock > wiremock.log 2>&1
-                    
-                    :: Espera de 20 segundos usando PING (es más estable para servicios)
-                    ping -n 21 127.0.0.1 > nul
-                    
-                    :: Ejecutar tests
-                    python -m pytest --junitxml=result-rest.xml test\\rest
-                    
-                    :: Limpiar procesos al terminar para que el servicio no se quede colgado
-                    taskkill /F /IM java.exe /T
-                    taskkill /F /IM python.exe /T
+                    echo --- VERIFICANDO PYTHON ---
+                    where python
+                    python --version
+                    echo --- VERIFICANDO PATH ---
+                    echo %PATH%
+                    dir "C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64"
                 '''
             }
         }
+
+        stage('Tests') {
+            parallel {
+                stage('Unit') {
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            bat '''
+                                set PYTHONPATH=%WORKSPACE%
+                                python -m pytest --junitxml=result-unit.xml test\\unit
+                            '''
+                        }
+                    }
+                }
+
+                stage('Rest') {
+                    steps {
+                        bat '''
+                            set PYTHONPATH=%WORKSPACE%
+                            set FLASK_APP=app\\api.py
+                            
+                            :: Lanzar en segundo plano y guardar log para no bloquear
+                            start /B flask run > flask.log 2>&1
+                            start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock > wiremock.log 2>&1
+                            
+                            :: Espera de 20 segundos con PING
+                            ping -n 21 127.0.0.1 > nul
+                            
+                            :: Ejecutar tests
+                            python -m pytest --junitxml=result-rest.xml test\\rest
+                            
+                            :: Limpieza de procesos
+                            taskkill /F /IM java.exe /T
+                        '''
+                    }
+                }
+            } // Fin de parallel
+        } // Fin de stage Tests
+
+        stage('Results') {
+            steps {
+                junit 'result*.xml'
+            }
         }
-        }
-    }
-    
-    stage ('Results') {
-        steps {
-            junit 'result*.xml'
-        }
-    }
-  }
+    } // Fin de stages
+} // Fin de pipeline
