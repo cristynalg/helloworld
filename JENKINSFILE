@@ -54,25 +54,22 @@ pipeline {
                     set PYTHONPATH=%WORKSPACE%
                     set FLASK_APP=app\\api.py
                     
-                    :: 1. Lanzar Flask en segundo plano
-                    start /B flask run
+                    :: Lanzar en segundo plano real (/B) y redirigir salida a un log para que no se bloquee
+                    start /B flask run > flask.log 2>&1
+                    start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock > wiremock.log 2>&1
                     
-                    :: 2. Lanzar Wiremock (asegúrate de que la ruta al .jar es correcta)
-                    start /B java -jar "C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar" --port 9090 --root-dir test\\wiremock
+                    :: Espera de 20 segundos usando PING (es más estable para servicios)
+                    ping -n 21 127.0.0.1 > nul
                     
-                    :: 3. ESPERA CRUCIAL: Pausamos el script 20 segundos para que el puerto 9090 se abra
-                    timeout /t 20 /nobreak
-                    
-                    :: 4. Verificación técnica (opcional): Esto nos dirá en el log si el puerto está abierto
-                    netstat -ano | findstr :9090
-                    
-                    :: 5. Ejecutar los tests
+                    :: Ejecutar tests
                     python -m pytest --junitxml=result-rest.xml test\\rest
                     
-                    :: 6. Limpieza final: Matamos el proceso de Java para que no bloquee el siguiente build
+                    :: Limpiar procesos al terminar para que el servicio no se quede colgado
                     taskkill /F /IM java.exe /T
+                    taskkill /F /IM python.exe /T
                 '''
-            }    
+            }
+        }
         }
         }
     }
