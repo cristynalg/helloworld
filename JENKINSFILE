@@ -48,27 +48,32 @@ pipeline {
                 }
             }
             
-		stage('Rest') {
-    		steps {
-        		bat '''
+        stage('Rest') {
+            steps {
+                bat '''
                     set PYTHONPATH=%WORKSPACE%
                     set FLASK_APP=app\\api.py
-            
-                    :: 1. Lanzamos los servicios con /B (Background) para que no bloqueen
-                    start /B flask run
-                    start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
                     
-                    :: 2. ESPERA CRUCIAL: Esperamos 20 segundos a que Java y Flask arranquen de verdad
+                    :: 1. Lanzar Flask en segundo plano
+                    start /B flask run
+                    
+                    :: 2. Lanzar Wiremock (asegúrate de que la ruta al .jar es correcta)
+                    start /B java -jar "C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar" --port 9090 --root-dir test\\wiremock
+                    
+                    :: 3. ESPERA CRUCIAL: Pausamos el script 20 segundos para que el puerto 9090 se abra
                     timeout /t 20 /nobreak
                     
-                    :: 3. Ahora que el puerto 9090 debería estar abierto, lanzamos los tests
+                    :: 4. Verificación técnica (opcional): Esto nos dirá en el log si el puerto está abierto
+                    netstat -ano | findstr :9090
+                    
+                    :: 5. Ejecutar los tests
                     python -m pytest --junitxml=result-rest.xml test\\rest
                     
-                    :: 4. Limpieza (Opcional): Cerramos los servicios al terminar
+                    :: 6. Limpieza final: Matamos el proceso de Java para que no bloquee el siguiente build
                     taskkill /F /IM java.exe /T
                 '''
-    		}    
-		} 
+            }    
+        }
         }
     }
     
