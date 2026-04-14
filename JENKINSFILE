@@ -51,19 +51,22 @@ pipeline {
 		stage('Rest') {
     		steps {
         		bat '''
-    				set PYTHONPATH=%WORKSPACE%
-    				set FLASK_APP=app\\api.py
-    
-    				:: Lanzar Flask y Wiremock en segundo plano
-    				start /B flask run
-    				start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-    
-    				:: ESPERA CRUCIAL: 15 segundos para que Java y Flask arranquen
-    				timeout /t 15 /nobreak
-    
-    				:: Ahora sí, ejecutamos los tests
-    				python -m pytest --junitxml=result-rest.xml test\\rest
-				'''
+                    set PYTHONPATH=%WORKSPACE%
+                    set FLASK_APP=app\\api.py
+            
+                    :: 1. Lanzamos los servicios con /B (Background) para que no bloqueen
+                    start /B flask run
+                    start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\helloworld\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+                    
+                    :: 2. ESPERA CRUCIAL: Esperamos 20 segundos a que Java y Flask arranquen de verdad
+                    timeout /t 20 /nobreak
+                    
+                    :: 3. Ahora que el puerto 9090 debería estar abierto, lanzamos los tests
+                    python -m pytest --junitxml=result-rest.xml test\\rest
+                    
+                    :: 4. Limpieza (Opcional): Cerramos los servicios al terminar
+                    taskkill /F /IM java.exe /T
+                '''
     		}    
 		} 
         }
