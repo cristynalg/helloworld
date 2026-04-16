@@ -33,8 +33,8 @@ pipeline {
                         bat '''
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
-                            start flask run                      
-                            java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+                            start /B start flask run                      
+                            start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
                         '''
                     }
                 }
