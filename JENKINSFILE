@@ -23,7 +23,6 @@ pipeline {
                     python --version
                     echo --- VERIFICANDO PATH ---
                     echo %PATH%
-                    dir "C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64"
                 '''
             }
         }
