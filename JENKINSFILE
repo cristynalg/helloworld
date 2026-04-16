@@ -28,34 +28,31 @@ pipeline {
                     }
                 }
 
-                stage('Wiremock') {
+				stage('Services & Rest') {
                     steps {
+                        // Levantamos servicios y ejecutamos los tests de integración en el mismo hilo
+                        // para asegurar que los servicios están listos.
                         bat '''
-                            set FLASK_APP=app\\api.py
-                            set FLASK_ENV=development
-                            start /B start flask run                      
-                            start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+                        set FLASK_APP=app\\api.py
+                        set FLASK_ENV=development
+                        start /B flask run
+                        start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+                        
+                        timeout /t 5 /nobreak > nul
+                        
+                        set PYTHONPATH=%WORKSPACE%
+                        pytest --junitxml=result-rest.xml test\\rest
                         '''
                     }
                 }
-                stage('Final') {
-                    steps {
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            bat '''
-                            set PYTHONPATH=%WORKSPACE%
-                            pytest --junitxml=result-unit.xml test\\rest
-                            '''
-                        }
-                    }
-                }
+       
                 
-            } // Fin de parallel
-        } // Fin de stage Tests
-
-        stage('Results') {
-            steps {
-                junit 'result*.xml'
             }
         }
-    } // Fin de stages
-} // Fin de pipeline
+        stage('Results') {
+            steps {
+                junit testResults: 'result-*.xml', allowEmptyResults: true
+            }
+        }
+    }
+}
