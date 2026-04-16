@@ -21,8 +21,8 @@ pipeline {
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat '''
-                            bat 'dir'
-                                pytest --junitxml=result-unit.xml test\\unit
+                            set PYTHONPATH=%WORKSPACE%
+                            pytest --junitxml=result-unit.xml test\\unit
                             '''
                         }
                     }
@@ -31,7 +31,7 @@ pipeline {
                 stage('Rest') {
                     steps {
                         bat '''
-                            set PYTHONPATH=C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64
+                            set PYTHONPATH=C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
                             start flask run                      
