@@ -10,7 +10,8 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo "Workspace actual: ${WORKSPACE}"
+                echo "Lanzandolo el dia 16-04-2026"
+				echo "Workspace actual: ${WORKSPACE}"
                 bat 'dir'
             }
         }
