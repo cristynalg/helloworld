@@ -28,19 +28,27 @@ pipeline {
                     }
                 }
 
-                stage('Rest') {
+                stage('Wiremock') {
                     steps {
                         bat '''
-                            set PYTHONPATH=C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
                             start flask run                      
                             java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-                            :: Ejecutar tests
-                            pytest --junitxml=result-rest.xml test\\rest
                         '''
                     }
                 }
+                stage('Final') {
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            bat '''
+                            set PYTHONPATH=%WORKSPACE%
+                            pytest --junitxml=result-unit.xml test\\rest
+                            '''
+                        }
+                    }
+                }
+                
             } // Fin de parallel
         } // Fin de stage Tests
 
