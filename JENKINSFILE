@@ -15,25 +15,13 @@ pipeline {
             }
         }
 
-        stage('Debug & Diagnóstico') {
-            steps {
-                bat '''
-                    echo --- VERIFICANDO PYTHON ---
-                    where python
-                    python --version
-                    echo --- VERIFICANDO PATH ---
-                    echo %PATH%
-                '''
-            }
-        }
-
         stage('Tests') {
             parallel {
                 stage('Unit') {
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat '''
-                                set PYTHONPATH=%WORKSPACE%
+                                set PYTHONPATH=C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64
                                 pytest --junitxml=result-unit.xml test\\unit
                             '''
                         }
@@ -43,11 +31,11 @@ pipeline {
                 stage('Rest') {
                     steps {
                         bat '''
+                            set PYTHONPATH=C:\\Users\\Cris\\AppData\\Local\\Python\\pythoncore-3.14-64
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
                             start flask run                      
                             java -jar C:\\Users\\Cris\\Desktop\\Tema4_CP_1.1\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-                            set PYTHONPATH=%WORKSPACE%
                             :: Ejecutar tests
                             pytest --junitxml=result-rest.xml test\\rest
                         '''
