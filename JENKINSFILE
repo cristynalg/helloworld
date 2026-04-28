@@ -29,21 +29,21 @@ pipeline {
                     steps {
                         unstash 'source-code'
 						catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        bat '''
-							set FLASK_APP=app\\api.py
-							
-							//levantamos flask en modo 2 plano
-							start /B flask run
-							
-							//levantamos wiremock en modo 2 plano
-							start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4y6\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-							
-							//damos 5 segundos de cortesia para asegurar subida de servicios
-							timeout /t 5 /nobreak > nul
-							
-							set PYTHONPATH=%WORKSPACE%
-							pytest --junitxml=result-rest.xml test\\rest
-                        '''
+							bat '''
+								set FLASK_APP=app\\api.py
+								
+								//levantamos flask en modo 2 plano
+								start /B flask run
+								
+								//levantamos wiremock en modo 2 plano
+								start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4y6\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+								
+								//damos 5 segundos de cortesia para asegurar subida de servicios
+								timeout /t 5 /nobreak > nul
+								
+								set PYTHONPATH=%WORKSPACE%
+								pytest --junitxml=result-rest.xml test\\rest
+							'''
 						}
 						junit testResults: 'result-rest.xml', allowEmptyResults: true
                     }
@@ -54,10 +54,12 @@ pipeline {
 		stage('Static') {
 			steps {
 				unstash 'source-code'
-				bat '''
-					set FLASK_APP=app\\api.py
-					flake8 --exit-zero --format=pylint app > flake8.out
-				'''
+				catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+					bat '''
+						set FLASK_APP=app\\api.py
+						flake8 --exit-zero --format=pylint app > flake8.out
+					'''
+				}
 				recordIssues qualityGates: [[integerThreshold: 8, threshold: 8.0, type: 'TOTAL'], [criticality: 'FAILURE', integerThreshold: 10, threshold: 10.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [flake8(pattern: 'flake8.out')]
 			}
 		}
@@ -65,9 +67,11 @@ pipeline {
 		stage('Security') {
 			steps {
 				unstash 'source-code'
+				catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 				bat '''
 					bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}:{severity}:{test_id}:{msg}"
 				'''
+				}
 				recordIssues qualityGates: [[integerThreshold: 2, threshold: 2.0, type: 'TOTAL'], [criticality: 'FAILURE', integerThreshold: 4, threshold: 4.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [pyLint(pattern: 'bandit.out')]
 			}
 		}		
@@ -75,9 +79,11 @@ pipeline {
 		stage('Perfomance/Rendimiento') {
 			steps {
 				unstash 'source-code'
-				bat '''
-					C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
-				'''
+				catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+					bat '''
+						C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
+					'''
+				}
 				perfReport sourceDataFiles: 'test-plain.jtl'
 			}
 		}		
