@@ -13,7 +13,7 @@ pipeline {
 				//Test unitarios
                 stage('Unit Tests') {
                     steps {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
                             bat '''
 								set PYTHONPATH=%WORKSPACE%
 								coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
@@ -25,7 +25,7 @@ pipeline {
 				//Test de integracion
                 stage('Rest Tests') {
                     steps {
-						catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+						catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 							bat '''
 								set FLASK_APP=app\\api.py
 								
@@ -50,19 +50,19 @@ pipeline {
 
 		stage('Static') {
 			steps {
-				catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
 						set FLASK_APP=app\\api.py
 						flake8 --exit-zero --format=pylint app > flake8.out
 					'''
-				}
 				recordIssues qualityGates: [[integerThreshold: 8, threshold: 8.0, type: 'TOTAL'], [criticality: 'FAILURE', integerThreshold: 10, threshold: 10.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [flake8(pattern: 'flake8.out')]
+				}
 			}
 		}
 
 		stage('Security') {
 			steps {
-				catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 				bat '''
 					bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}:{severity}:{test_id}:{msg}"
 				'''
@@ -73,7 +73,7 @@ pipeline {
 		
 		stage('Perfomance/Rendimiento') {
 			steps {
-				catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
 						C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
 					'''
@@ -84,13 +84,12 @@ pipeline {
 		
 		stage('Coverage') {
 			steps {
-				catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
 						coverage xml
 					'''
-				}
 				recordCoverage qualityGates: [[integerThreshold: 100, metric: 'LINE', threshold: 96.0], [criticality: 'FAILURE', integerThreshold: 95, metric: 'LINE', threshold: 85.0], [criticality:  'ERROR', integerThreshold: 84, metric: 'LINE', threshold: 0.0],[integerThreshold: 100, metric: 'BRANCH', threshold: 91.0], [criticality: 'FAILURE', integerThreshold: 90, metric: 'BRANCH', threshold: 80.0],[criticality: 'ERROR', integerThreshold: 79, metric: 'BRANCH', threshold: 0.0] ], tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
-				
+				}
 				//recordCoverage qualityGates: [[integerThreshold: 100, metric: 'LINE', threshold: 96.0], [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 95.0], [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0], [integerThreshold: 90, metric: 'BRANCH', threshold: 90.0]], tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
 			}
 		}	
