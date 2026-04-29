@@ -5,7 +5,6 @@ pipeline {
         stage('Get Code') {
             steps {
                 git 'https://github.com/cristynalg/helloworld.git'
-				stash name: 'source-code', includes: '**'
             }
         }
 
@@ -14,11 +13,10 @@ pipeline {
 				//Test unitarios
                 stage('Unit Tests') {
                     steps {
-                        unstash 'source-code'
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat '''
 								set PYTHONPATH=%WORKSPACE%
-								pytest --junitxml=result-unit.xml test\\unit
+								coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
                             '''
                         }
 						junit testResults: 'result-unit.xml', allowEmptyResults: true
@@ -27,7 +25,6 @@ pipeline {
 				//Test de integracion
                 stage('Rest Tests') {
                     steps {
-                        unstash 'source-code'
 						catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 							bat '''
 								set FLASK_APP=app\\api.py
@@ -53,7 +50,6 @@ pipeline {
 
 		stage('Static') {
 			steps {
-				unstash 'source-code'
 				catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 					bat '''
 						set FLASK_APP=app\\api.py
@@ -66,7 +62,6 @@ pipeline {
 
 		stage('Security') {
 			steps {
-				unstash 'source-code'
 				catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 				bat '''
 					bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}:{severity}:{test_id}:{msg}"
@@ -78,7 +73,6 @@ pipeline {
 		
 		stage('Perfomance/Rendimiento') {
 			steps {
-				unstash 'source-code'
 				catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 					bat '''
 						C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
@@ -90,10 +84,8 @@ pipeline {
 		
 		stage('Coverage') {
 			steps {
-				unstash 'source-code'
 				catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 					bat '''
-						coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest test\\unit
 						coverage xml
 					'''
 				}
