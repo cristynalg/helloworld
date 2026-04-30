@@ -1,28 +1,27 @@
 //pipeline para caso practico 1.2 sin nodos (reto 1)
 pipeline {
 	agent any
-	stages {
-		stage('Get Code') {
-			steps {
-				git 'https://github.com/cristynalg/helloworld.git'
-			}
-		}
-
+    stages {
+        stage('Get Code') {
+            steps {
+                git 'https://github.com/cristynalg/helloworld.git'
+            }
+        }
 		//Test unitarios
-		stage('Test unit') {
+		stage('Unit Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
-					bat ''			
-						set PYTHONPATH=%WORKSPACE%			
+					bat '''
+						set PYTHONPATH=%WORKSPACE%
 						coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
-					'''
-				junit testResults: 'result-unit.xml', allowEmptyResults: true
+                       '''
 				}
+				junit testResults: 'result-unit.xml', allowEmptyResults: true
 			}
-		}
-
+           }
+		
 		//Test de integracion
-		stage('Test rest') {
+		stage('Rest Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
@@ -45,9 +44,9 @@ pipeline {
 				junit testResults: 'result-rest.xml', allowEmptyResults: true
 			}
 		}
-  
+				
 		//Test de analisis de codigo estatico
-		stage('Test static') {
+		stage('Static') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
@@ -60,7 +59,7 @@ pipeline {
 		}
 
 		//Test de seguridad
-		stage('Test security') {
+		stage('Security') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 				bat '''
@@ -70,9 +69,9 @@ pipeline {
 				}
 			}
 		}		
-
+		
 		//Test de rendimiento
-		stage('Test perfomance') {
+		stage('Perfomance') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
@@ -82,9 +81,9 @@ pipeline {
 				perfReport sourceDataFiles: 'test-plain.jtl'
 			}
 		}		
-
+		
 		//Test de cobertura
-		stage('Test coverage') {
+		stage('Coverage') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
