@@ -47,56 +47,56 @@ pipeline {
 						junit testResults: 'result-rest.xml', allowEmptyResults: true
                     }
                 }
-            }
+            
+				//Test de analisis de codigo estatico
+				stage('Static') {
+					steps {
+						catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
+							bat '''
+								set FLASK_APP=app\\api.py
+								flake8 --exit-zero --format=pylint app > flake8.out
+							'''
+						recordIssues qualityGates: [[integerThreshold: 8, threshold: 8.0, type: 'TOTAL'], [criticality: 'FAILURE', integerThreshold: 10, threshold: 10.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [flake8(pattern: 'flake8.out')]
+						}
+					}
+				}
+		
+				//Test de seguridad
+				stage('Security') {
+					steps {
+						catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
+						bat '''
+							bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}:{severity}:{test_id}:{msg}"
+						'''
+						}
+						recordIssues qualityGates: [[integerThreshold: 2, threshold: 2.0, type: 'TOTAL'], [criticality: 'FAILURE', integerThreshold: 4, threshold: 4.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [pyLint(pattern: 'bandit.out')]
+					}
+				}		
+				
+				//Test de rendimiento
+				stage('Perfomance') {
+					steps {
+						catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
+							bat '''
+								C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
+							'''
+						}
+						perfReport sourceDataFiles: 'test-plain.jtl'
+					}
+				}		
+				
+				//Test de cobertura
+				stage('Coverage') {
+					steps {
+						catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
+							bat '''
+								coverage xml
+							'''
+						recordCoverage qualityGates: [[criticality: 'UNSTABLE', integerThreshold: 95, metric: 'LINE', threshold: 95.0], [criticality: 'FAILURE', integerThreshold: 85, metric: 'LINE', threshold: 85.0], [criticality: 'UNSTABLE', integerThreshold: 90, metric: 'BRANCH', threshold: 90.0], [criticality: 'FAILURE', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0] ], tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
+						}
+					}
+				}	
+			}
         }
-		//Test de analisis de codigo estatico
-		stage('Static') {
-			steps {
-				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
-					bat '''
-						set FLASK_APP=app\\api.py
-						flake8 --exit-zero --format=pylint app > flake8.out
-					'''
-				recordIssues qualityGates: [[integerThreshold: 8, threshold: 8.0, type: 'TOTAL'], [criticality: 'FAILURE', integerThreshold: 10, threshold: 10.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [flake8(pattern: 'flake8.out')]
-				}
-			}
-		}
-
-		//Test de seguridad
-		stage('Security') {
-			steps {
-				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
-				bat '''
-					bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}:{severity}:{test_id}:{msg}"
-				'''
-				}
-				recordIssues qualityGates: [[integerThreshold: 2, threshold: 2.0, type: 'TOTAL'], [criticality: 'FAILURE', integerThreshold: 4, threshold: 4.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [pyLint(pattern: 'bandit.out')]
-			}
-		}		
-		
-		//Test de rendimiento
-		stage('Perfomance') {
-			steps {
-				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
-					bat '''
-						C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
-					'''
-				}
-				perfReport sourceDataFiles: 'test-plain.jtl'
-			}
-		}		
-		
-		//Test de cobertura
-		stage('Coverage') {
-			steps {
-				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
-					bat '''
-						coverage xml
-					'''
-				recordCoverage qualityGates: [[criticality: 'UNSTABLE', integerThreshold: 95, metric: 'LINE', threshold: 95.0], [criticality: 'FAILURE', integerThreshold: 85, metric: 'LINE', threshold: 85.0], [criticality: 'UNSTABLE', integerThreshold: 90, metric: 'BRANCH', threshold: 90.0],[criticality: 'FAILURE', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0] ], tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
-				}
-				//recordCoverage qualityGates: [[integerThreshold: 100, metric: 'LINE', threshold: 96.0], [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 95.0], [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0], [integerThreshold: 90, metric: 'BRANCH', threshold: 90.0]], tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
-			}
-		}	
 	}
 }
