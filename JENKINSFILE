@@ -26,15 +26,10 @@ pipeline {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
 						set FLASK_APP=app\\api.py
-						
-						//levantamos flask en modo 2o plano
 						start /B flask run
-						
-						//levantamos wiremock en modo 2o plano
+
 						start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4y6\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-						
-						//damos 5 segundos de cortesia para asegurar subida de servicios
-						//timeout /t 5 /nobreak > nul
+
 						ping 127.0.0.1 -n 6 >nul
 						
 						set PYTHONPATH=%WORKSPACE%
@@ -46,7 +41,7 @@ pipeline {
 		}
 				
 		//Test de analisis de codigo estatico
-		stage('Static') {
+		stage('Static Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
@@ -59,7 +54,7 @@ pipeline {
 		}
 
 		//Test de seguridad
-		stage('Security') {
+		stage('Security Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 				bat '''
@@ -71,7 +66,7 @@ pipeline {
 		}		
 		
 		//Test de rendimiento
-		stage('Perfomance') {
+		stage('Perfomance Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
@@ -83,7 +78,7 @@ pipeline {
 		}		
 		
 		//Test de cobertura
-		stage('Coverage') {
+		stage('Coverage Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
