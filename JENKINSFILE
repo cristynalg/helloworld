@@ -13,7 +13,8 @@ pipeline {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat ''			
-						set PYTHONPATH=%WORKSPACE			coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
+						set PYTHONPATH=%WORKSPACE			
+						coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
 					'''
 				junit testResults: 'result-unit.xml', allowEmptyResults: true
 				}
