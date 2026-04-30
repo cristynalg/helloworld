@@ -35,7 +35,7 @@ pipeline {
 						
 						//damos 5 segundos de cortesia para asegurar subida de servicios
 						//timeout /t 5 /nobreak > nul
-						sleep 5
+						Start-Sleep -Seconds 5
 						
 						set PYTHONPATH=%WORKSPACE%
 						pytest --junitxml=result-rest.xml test\\rest
