@@ -1,4 +1,4 @@
-//Pipeline para caso practico 1.2 sin nodos (reto 1).
+//Pipeline para caso practico 1.2 sin nodos (reto 1). Ejecutado en entorno local windows. Todas las etapas llevan el catchError para evitar que un fallo inesperado interrumpa la ejecucion del resto del pipeline.
 pipeline {
 	agent any
     stages {
@@ -13,7 +13,6 @@ pipeline {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
-						//set PYTHONPATH=%WORKSPACE%
 						coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
                        '''
 				}
@@ -26,11 +25,9 @@ pipeline {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
-						//set PYTHONPATH=%WORKSPACE%
 						set FLASK_APP=app\\api.py
 						
 						start /B flask run
-						//start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4y6\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
 						start /B java -jar wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
 						ping 127.0.0.1 -n 5 >nul
 						
@@ -71,7 +68,6 @@ pipeline {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
-						//C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
 						apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
 					'''
 				}
