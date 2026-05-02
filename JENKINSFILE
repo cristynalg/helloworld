@@ -1,4 +1,4 @@
-//pipeline para caso practico 1.2 sin nodos (reto 1)
+//Pipeline para caso practico 1.2 sin nodos (reto 1).
 pipeline {
 	agent any
     stages {
@@ -7,12 +7,13 @@ pipeline {
                 git 'https://github.com/cristynalg/helloworld.git'
             }
         }
-		//Test unitarios
+		
+		//Test unitarios. Ejecuto aqui el test coverage directamente porque ya es una prueba unitaria de por si, y para no usar dos veces el pytest luego en la etapa de cobertura.
 		stage('Unit Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
-						set PYTHONPATH=%WORKSPACE%
+						//set PYTHONPATH=%WORKSPACE%
 						coverage run --branch --source=app --omit=app\\__init__.py --omit=app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
                        '''
 				}
@@ -20,19 +21,19 @@ pipeline {
 			}
            }
 		
-		//Test de integracion
+		//Test de integracion. Levanto en 2o plano flask y wiremock y pongo ping de 5 segundos para dar tiempo a levantar servicios antes de ejecutar pytest.
 		stage('Rest Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
+						//set PYTHONPATH=%WORKSPACE%
 						set FLASK_APP=app\\api.py
-						start /B flask run
-
-						start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4y6\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-
-						ping 127.0.0.1 -n 6 >nul
 						
-						set PYTHONPATH=%WORKSPACE%
+						start /B flask run
+						//start /B java -jar C:\\Users\\Cris\\Desktop\\Tema4y6\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+						start /B java -jar wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+						ping 127.0.0.1 -n 5 >nul
+						
 						pytest --junitxml=result-rest.xml test\\rest
 					'''
 				}
@@ -40,7 +41,7 @@ pipeline {
 			}
 		}
 				
-		//Test de analisis de codigo estatico
+		//Test de analisis de codigo estatico. 
 		stage('Static Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
@@ -53,7 +54,7 @@ pipeline {
 			}
 		}
 
-		//Test de seguridad
+		//Test de seguridad.
 		stage('Security Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
@@ -65,19 +66,20 @@ pipeline {
 			}
 		}		
 		
-		//Test de rendimiento
+		//Test de rendimiento.
 		stage('Perfomance Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
 					bat '''
-						C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
+						//C:\\Users\\Cris\\Desktop\\Tema4y6\\apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
+						apache-jmeter-5.5\\bin\\jmeter -n -t test\\jmeter\\test-plain.jmx -l test-plain.jtl
 					'''
 				}
 				perfReport sourceDataFiles: 'test-plain.jtl'
 			}
 		}		
 		
-		//Test de cobertura
+		//Test de cobertura. Esta etapa solo se encarga de procesar los datos en formato xml obtenidos en la etapa de test unit.
 		stage('Coverage Tests') {
 			steps {
 				catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
